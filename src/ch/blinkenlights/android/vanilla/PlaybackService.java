@@ -59,6 +59,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.Toast;
+import java.lang.Math;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -385,6 +386,10 @@ public final class PlaybackService extends Service
 	 */
 	private boolean mForceNotificationVisible;
 	/**
+	 * Amount of songs included in our auto playlist
+	 */
+	private int mAutoPlPlaycounts;
+	/**
 	 * Enables or disables Replay Gain
 	 */
 	private boolean mReplayGainTrackEnabled;
@@ -464,6 +469,8 @@ public final class PlaybackService extends Service
 		refreshDuckingValues();
 
 		mReadaheadEnabled = settings.getBoolean(PrefKeys.ENABLE_READAHEAD, false);
+
+		mAutoPlPlaycounts = Integer.parseInt(settings.getString(PrefKeys.AUTOPLAYLIST_PLAYCOUNTS, "25")); // Stored as string due to entry_values use
 
 		PowerManager powerManager = (PowerManager)getSystemService(POWER_SERVICE);
 		mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "VanillaMusicLock");
@@ -867,6 +874,8 @@ public final class PlaybackService extends Service
 			refreshDuckingValues();
 		} else if (PrefKeys.ENABLE_READAHEAD.equals(key)) {
 			mReadaheadEnabled = settings.getBoolean(PrefKeys.ENABLE_READAHEAD, false);
+		} else if (PrefKeys.AUTOPLAYLIST_PLAYCOUNTS.equals(key)) {
+			mAutoPlPlaycounts = Integer.parseInt(settings.getString(PrefKeys.AUTOPLAYLIST_PLAYCOUNTS, "25"));
 		} else if (PrefKeys.USE_DARK_THEME.equals(key)) {
 			// Theme changed: trigger a restart of all registered activites
 			ArrayList<PlaybackActivity> list = sActivities;
@@ -1329,10 +1338,10 @@ public final class PlaybackService extends Service
 	public void onCompletion(MediaPlayer player)
 	{
 
-		// Count this song as played
 		Song song = mTimeline.getSong(0);
-		mHandler.sendMessage(mHandler.obtainMessage(MSG_UPDATE_PLAYCOUNTS, song));
 
+		// Count this song as played
+		mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_UPDATE_PLAYCOUNTS, song), 2500);
 
 		if (finishAction(mState) == SongTimeline.FINISH_REPEAT_CURRENT) {
 			setCurrentSong(0);
@@ -1505,6 +1514,18 @@ public final class PlaybackService extends Service
 		case MSG_UPDATE_PLAYCOUNTS:
 			Song song = (Song)message.obj;
 			mPlayCounts.countSong(song);
+
+			// Update the playcounts playlist in ~20% of all cases if enabled
+			if (mAutoPlPlaycounts > 0 && Math.random() > 0.8) {
+				ContentResolver resolver = getContentResolver();
+				// Add an invisible whitespace to adjust our sorting
+				String playlistName = "\u200B"+getString(R.string.autoplaylist_playcounts_name, mAutoPlPlaycounts);
+				long id = Playlist.createPlaylist(resolver, playlistName);
+				ArrayList<Long> items = mPlayCounts.getTopSongs(mAutoPlPlaycounts);
+				Playlist.addToPlaylist(resolver, id, items);
+			}
+
+
 			break;
 		default:
 			return false;

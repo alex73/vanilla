@@ -26,7 +26,7 @@ THE SOFTWARE.
 	android:versionName="1.0.31"
 	android:versionCode="1031"
 	android:installLocation="auto">
-	<uses-sdk android:minSdkVersion="15" android:targetSdkVersion="21" />
+	<uses-sdk android:minSdkVersion="15" android:targetSdkVersion="23" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 	<!-- This is needed for isWiredHeadsetOn() to work in some cases. (bug?) -->
@@ -37,17 +37,27 @@ THE SOFTWARE.
 		<activity
 			android:name="FullPlaybackActivity"
 			android:launchMode="singleTask" />
-		<activity
-			android:name="LibraryActivity"
-			android:theme="@style/Library"
-			android:uiOptions="splitActionBarWhenNarrow"
-			android:launchMode="singleTask">
-			<intent-filter>
-				<action android:name="android.intent.action.MAIN" />
-				<category android:name="android.intent.category.LAUNCHER" />
-			</intent-filter>
-		</activity>
-		<activity
+        <!-- activity
+            android:name="LibraryActivity"
+            android:theme="@style/Library"
+            android:uiOptions="splitActionBarWhenNarrow"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-->
+         <activity
+            android:name="MyLibraryActivity"
+            android:theme="@style/Library"
+            android:uiOptions="splitActionBarWhenNarrow"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
 			android:name="PlaylistActivity"
 			android:launchMode="singleTask" />
 		<activity
